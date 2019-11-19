@@ -1,6 +1,9 @@
 #lang racket/base
 
-(require "ast.rkt")
+(require racket/match
+         racket/math
+         "ast.rkt"
+         "parser.rkt")
 
 (define env (make-hash))
 
@@ -48,6 +51,30 @@
                       (eval rhs))]
            [else (cons 'E_VARNF dyn-lhs)]))])))
 
+(define (handle-add-op lhs rhs)
+  (let ([dlhs (eval lhs)]
+        [drhs (eval rhs)])
+    (cond
+      [(and (number? dlhs) (number? drhs))
+       (+ dlhs drhs)]
+      [(and (string? dlhs) (string? drhs))
+       (string-append dlhs drhs)]
+      [(and (number? dlhs) (string? drhs))
+       (string-append (number->string dlhs) drhs)]
+      [(and (string? dlhs) (number? drhs))
+       (string-append dlhs (number->string drhs))]
+      [else 'E_INVARG])))
+
+(define (handle-binary-op x)
+  (let ([op (expr-binary-op x)]
+        [lhs (expr-binary-lhs x)]
+        [rhs (expr-binary-rhs x)])
+    (match op
+      ['add (handle-add-op lhs rhs)]
+      ['sub (- (eval lhs) (eval rhs))]
+      ['div (exact-floor (/ (eval lhs) (eval rhs)))]
+      ['mul (* (eval lhs) (eval rhs))])))
+
 (define (eval x)
   (cond
     [(expr-const? x)
@@ -55,6 +82,11 @@
     [(expr-id? x)
      (var-ref (expr-id-name x))]
     [(expr-set!? x)
-     (handle-set! x)]))
+     (handle-set! x)]
+    [(expr-binary? x)
+     (handle-binary-op x)]))
 
-(provide eval)
+(define (eval/parse str)
+  (eval (parse/string str)))
+
+(provide eval eval/parse)
