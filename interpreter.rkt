@@ -5,7 +5,21 @@
          "ast.rkt"
          "parser.rkt")
 
+(define INT 1)
+(define FLOAT 2)
+(define STR 3)
+(define LIST 4)
+(define HASH 5)
+(define OBJ 6)
+(define ERR 7)
+
 (define env (make-hash))
+
+(define (typeof x)
+  (cond
+    [(integer? x) 'INT]
+    [(number? x) 'FLOAT]
+    [(string? x) 'STR]))
 
 (define (var-ref id)
   (cond
@@ -44,29 +58,66 @@
                       (eval rhs))]
            [else (cons 'E_VARNF dyn-lhs)]))])))
 
-(define (handle-add-op lhs rhs)
-  (let ([dlhs (eval lhs)]
-        [drhs (eval rhs)])
-    (cond
-      [(and (number? dlhs) (number? drhs))
-       (+ dlhs drhs)]
-      [(and (string? dlhs) (string? drhs))
-       (string-append dlhs drhs)]
-      [(and (number? dlhs) (string? drhs))
-       (string-append (number->string dlhs) drhs)]
-      [(and (string? dlhs) (number? drhs))
-       (string-append dlhs (number->string drhs))]
-      [else 'E_INVARG])))
+(define (handle-binary x)
+  (define (handle-add lhs rhs)
+    (let ([lhs (eval lhs)]
+          [rhs (eval rhs)])
+      (cond
+        [(and (number? lhs) (number? rhs))
+         (+ lhs rhs)]
+        [(and (string? lhs) (string? rhs))
+         (string-append lhs rhs)]
+        [(and (number? lhs) (string? rhs))
+         (string-append (number->string lhs) rhs)]
+        [(and (string? lhs) (number? rhs))
+         (string-append lhs (number->string rhs))]
+        [else 'E_INVARG])))
 
-(define (handle-binary-op x)
+  (define (handle-sub lhs rhs)
+    (let ([lhs (eval lhs)]
+          [rhs (eval rhs)])
+      (cond
+        [(and (number? lhs) (number? rhs))
+         (- lhs rhs)]
+        [else 'E_INVARG])))
+
+  (define (handle-div lhs rhs)
+    (let ([lhs (eval lhs)]
+          [rhs (eval rhs)])
+      (cond
+        [(and (number? lhs) (number? rhs))
+         ; (arbitrarely) force rhs to inexact so
+         ; we won't have any rationals popping up
+         (/ lhs (exact->inexact rhs))]
+        [else 'E_INVARG])))
+
+  (define (handle-eq lhs rhs)
+    (let ([lhs (eval lhs)]
+          [rhs (eval rhs)])
+      (cond
+        [(and (inexact? lhs) (integer? rhs))
+         (equal? lhs (exact->inexact rhs))]
+        [(and (integer? lhs) (inexact? rhs))
+         (equal? (exact->inexact lhs) rhs)]
+        [else
+         (equal? lhs rhs)])))
+
   (let ([op (expr-binary-op x)]
         [lhs (expr-binary-lhs x)]
         [rhs (expr-binary-rhs x)])
     (match op
-      ['add (handle-add-op lhs rhs)]
-      ['sub (- (eval lhs) (eval rhs))]
-      ['div (exact-floor (/ (eval lhs) (eval rhs)))]
-      ['mul (* (eval lhs) (eval rhs))])))
+      ['add (handle-add lhs rhs)]
+      ['sub (handle-sub lhs rhs)]
+      ['div (handle-div lhs rhs)]
+      ['mul (* (eval lhs) (eval rhs))]
+      ['mod (modulo (eval lhs) (eval rhs))]
+      ['exp (expt (eval lhs) (eval rhs))]
+      ['eq (handle-eq lhs rhs)])))
+
+(define (handle-call x)
+  (let ([fn (eval (expr-call-fn x))]
+        [args (eval (expr-call-args x))])
+    #f))
 
 (define (eval x)
   (cond
@@ -77,9 +128,12 @@
     [(expr-set!? x)
      (handle-set! x)]
     [(expr-binary? x)
-     (handle-binary-op x)]))
+     (handle-binary x)]
+    [(expr-call? x)
+     (handle-call x)]))
 
 (define (eval/parse str)
   (eval (parse/string str)))
 
-(provide eval eval/parse)
+(provide eval
+         eval/parse)

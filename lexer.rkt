@@ -24,7 +24,7 @@
    ^
    !
    =
-   EQ
+   ==
    <
    NE
    >
@@ -95,9 +95,9 @@
    ["." 'DOT]
    ["`" 'BACKTICK]
    ["'" 'SQUOTE]
-   [(char-set "=<>+-*/%^!?:$") (string->symbol lexeme)]
    [".." (string->symbol lexeme)]
    ["=>" (string->symbol lexeme)]
+   ["==" (string->symbol lexeme)]
    ["and" 'AND]
    ["or" 'OR]
    ["in" 'IN]
@@ -108,7 +108,8 @@
    [float (token-FLOAT (string->number lexeme))]
    [int (token-INT (string->number lexeme))]
    [objid (token-OBJECT (string->number (substring lexeme 1)))]
-   [#\" (token-STRING (list->string (get-string-token input-port)))]))
+   [#\" (token-STRING (list->string (get-string-token input-port)))]
+   [(char-set "=<>+-*/%^!?:$") (string->symbol lexeme)]))
 
 (provide nani-lex
          literals

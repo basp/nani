@@ -26,7 +26,7 @@
    (precs (right =)
           (nonassoc ? PIPE)
           (left OR AND)
-          (left EQ NE < LE > GE IN)
+          (left == NE < LE > GE IN)
           (left + -)
           (left * / %)
           (right ^)
@@ -152,7 +152,7 @@
            (expr-binary 'mod $1 $3)]
           [(expr ^ expr)
            (expr-binary 'exp $1 $3)]
-          [(expr EQ expr)
+          [(expr == expr)
            (expr-binary 'eq $1 $3)]
           [(expr NE expr)
            (expr-binary 'ne $1 $3)]
