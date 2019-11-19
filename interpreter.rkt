@@ -15,11 +15,13 @@
 
 (define env (make-hash))
 
-(define (typeof x)
+(define (typeof xs)
   (cond
-    [(integer? x) 'INT]
-    [(number? x) 'FLOAT]
-    [(string? x) 'STR]))
+    [(integer? xs) 'INT]
+    [(number? xs) 'FLOAT]
+    [(string? xs) 'STR]
+    [(list? xs)
+     (map typeof xs)]))
 
 (define (var-ref id)
   (cond
@@ -102,6 +104,30 @@
         [else
          (equal? lhs rhs)])))
 
+  (define (handle-mul lhs rhs)
+    (let ([lhs (eval lhs)]
+          [rhs (eval rhs)])
+      (cond
+        [(and (number? lhs) (number? rhs))
+         (* lhs rhs)]
+        [else 'E_INVARG])))
+
+  (define (handle-mod lhs rhs)
+    (let ([lhs (eval lhs)]
+          [rhs (eval rhs)])
+      (cond
+        [(and (integer? lhs) (integer? rhs))
+         (modulo lhs rhs)]
+        [else 'E_INVARG])))
+
+  (define (handle-exp lhs rhs)
+    (let ([lhs (eval lhs)]
+          [rhs (eval rhs)])
+      (cond
+        [(and (number? lhs) (number? rhs))
+          (expt lhs rhs)]
+        [else 'E_INVARG])))
+  
   (let ([op (expr-binary-op x)]
         [lhs (expr-binary-lhs x)]
         [rhs (expr-binary-rhs x)])
@@ -109,16 +135,18 @@
       ['add (handle-add lhs rhs)]
       ['sub (handle-sub lhs rhs)]
       ['div (handle-div lhs rhs)]
-      ['mul (* (eval lhs) (eval rhs))]
-      ['mod (modulo (eval lhs) (eval rhs))]
+      ['mul (handle-mul lhs rhs)]
+      ['mod (handle-mod lhs rhs)]
       ['exp (expt (eval lhs) (eval rhs))]
       ['eq (handle-eq lhs rhs)])))
 
 (define (handle-call x)
-  (let ([fn (eval (expr-call-fn x))]
-        [args (eval (expr-call-args x))])
-    #f))
-
+  (let ([fn (expr-call-fn x)]
+        [args (expr-call-args x)])
+    (displayln fn)
+    (displayln args)))
+        
+    
 (define (eval x)
   (cond
     [(expr-const? x)
