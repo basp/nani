@@ -93,17 +93,6 @@
          (/ lhs (exact->inexact rhs))]
         [else 'E_INVARG])))
 
-  (define (handle-eq lhs rhs)
-    (let ([lhs (eval lhs)]
-          [rhs (eval rhs)])
-      (cond
-        [(and (inexact? lhs) (integer? rhs))
-         (equal? lhs (exact->inexact rhs))]
-        [(and (integer? lhs) (inexact? rhs))
-         (equal? (exact->inexact lhs) rhs)]
-        [else
-         (equal? lhs rhs)])))
-
   (define (handle-mul lhs rhs)
     (let ([lhs (eval lhs)]
           [rhs (eval rhs)])
@@ -126,8 +115,19 @@
       (cond
         [(and (number? lhs) (number? rhs))
           (expt lhs rhs)]
-        [else 'E_INVARG])))
-  
+        [else 'E_INVARG]))) 
+
+  (define (handle-eq lhs rhs)
+    (let ([lhs (eval lhs)]
+          [rhs (eval rhs)])
+      (cond
+        [(and (inexact? lhs) (integer? rhs))
+         (equal? lhs (exact->inexact rhs))]
+        [(and (integer? lhs) (inexact? rhs))
+         (equal? (exact->inexact lhs) rhs)]
+        [else
+         (equal? lhs rhs)])))
+
   (let ([op (expr-binary-op x)]
         [lhs (expr-binary-lhs x)]
         [rhs (expr-binary-rhs x)])
@@ -137,7 +137,7 @@
       ['div (handle-div lhs rhs)]
       ['mul (handle-mul lhs rhs)]
       ['mod (handle-mod lhs rhs)]
-      ['exp (expt (eval lhs) (eval rhs))]
+      ['exp (handle-exp lhs rhs)]
       ['eq (handle-eq lhs rhs)])))
 
 (define (handle-call x)
