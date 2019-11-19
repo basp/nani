@@ -23,14 +23,6 @@
   (cons 'E_PROPNF prop-name))
 
 (define (prop-set! obj prop-name val)
-  ; TODO
-  ; should expect to match
-  ; both obj and name with
-  ; id/object or an expr (in the case
-  ; of a dynamic lookup)
-  ; if dynamic lookup does not
-  ; eval to a string E_INVARG will
-  ; be returned
   (cons 'E_PROPNF prop-name))
 
 (define (handle-set! x)
