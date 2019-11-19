@@ -23,6 +23,7 @@
   (cons 'E_PROPNF prop-name))
 
 (define (prop-set! obj prop-name val)
+  ; TODO
   (cons 'E_PROPNF prop-name))
 
 (define (handle-set! x)
